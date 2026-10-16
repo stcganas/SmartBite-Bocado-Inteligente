@@ -28,7 +28,7 @@ SUPER ADMIN:      ✅ Creado (admin@smartbite.co / SmartBite2026!)
 RESTAURANTE DEMO: ✅ Creado ("La Parrilla de Don Juan", 22 productos, 6 categorías)
 GAMIFICACIÓN:     ✅ Ruleta Pay (8 segmentos) + Monedas de Oro + Multiplicadores
 SERVIDOR:         ✅ Funcionando en localhost:3000
-CONTROL DE VER.:  ⏳ Pendiente instalación de Git en la máquina host
+CONTROL DE VER.:  ✅ GitHub sincronizado (stcganas/SmartBite-Bocado-Inteligente: main)
 ```
 
 ---

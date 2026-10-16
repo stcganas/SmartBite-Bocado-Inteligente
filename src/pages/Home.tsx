@@ -1231,6 +1231,10 @@ export default function Home() {
     text: string;
     isPrize: boolean;
   } | null>(null);
+  const wonPrizeDataRef = useRef<{
+    text: string;
+    isPrize: boolean;
+  } | null>(null);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -1931,28 +1935,36 @@ export default function Home() {
                     pendingSpin.orderMessage ||
                     `*🍔 NUEVO PEDIDO*\nRestaurante: ${pendingSpin.restaurantName}\nTotal: $${pendingSpin.total}`;
 
-                  if (hasSpun && wonPrizeData) {
-                    if (wonPrizeData.isPrize !== false) {
-                      wpMsg += `\n\n🎁 *PREMIO GANADO EN RULETA:* ${wonPrizeData.text}`;
+                  const activePrize = wonPrizeDataRef.current || wonPrizeData;
+                  if (activePrize) {
+                    if (activePrize.isPrize !== false) {
+                      wpMsg += `\n\n🎁 *PREMIO GANADO EN RULETA:* ${activePrize.text}`;
                     } else {
-                      wpMsg += `\n\n💬 *MENSAJE DE RULETA:* ${wonPrizeData.text}`;
+                      wpMsg += `\n\n💬 *MENSAJE DE RULETA:* ${activePrize.text}`;
                     }
                   }
 
                   const wpUrl = getWhatsAppNativeUrl(wpMsg, rawPhone);
                   setTimeout(() => {
-                    window.location.href = wpUrl;
-                  }, 500);
+                    try {
+                      window.location.href = wpUrl;
+                    } catch (e) {
+                      console.error("Error opening WhatsApp:", e);
+                    }
+                  }, 400);
                 }
               }
 
               localStorage.removeItem("pendingWheelSpin");
               setHasSpun(false);
               setWonPrizeData(null);
+              wonPrizeDataRef.current = null;
             }}
             onWin={async (prize, isPrize) => {
               setHasSpun(true);
-              setWonPrizeData({ text: prize, isPrize: isPrize !== false });
+              const prizeObj = { text: prize, isPrize: isPrize !== false };
+              wonPrizeDataRef.current = prizeObj;
+              setWonPrizeData(prizeObj);
 
               if (pendingSpin) {
                 try {

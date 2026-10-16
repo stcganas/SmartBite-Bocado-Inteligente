@@ -44,7 +44,19 @@ export const LuckyWheel: React.FC<LuckyWheelProps> = ({
   spinDuration = 3,
   autoSpin = false,
 }) => {
-  const safeSegments = Array.isArray(segments) && segments.length > 0 ? segments : [{ text: "Giro Gratis", isPrize: true }];
+  const safeSegments = (Array.isArray(segments) && segments.length > 0 ? segments : [{ text: "Giro Gratis", isPrize: true }])
+    .map((seg: any, idx: number) => {
+      const rawText = String(seg?.text || seg?.label || seg?.prize_text || seg?.prizeText || `Premio ${idx + 1}`).trim();
+      const isRetry = seg?.type === 'retry' || /inténtalo|suerte|gracias|nada|perdiste/i.test(rawText);
+      const isPrize = seg?.isPrize !== undefined ? Boolean(seg.isPrize) : !isRetry;
+      return {
+        text: rawText || "Premio",
+        isPrize,
+        color: seg?.color || COLOR_PALETTE[idx % COLOR_PALETTE.length],
+        type: seg?.type,
+        value: seg?.value
+      };
+    });
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [winningSegmentIndex, setWinningSegmentIndex] = useState<number | null>(
@@ -346,8 +358,8 @@ export const LuckyWheel: React.FC<LuckyWheelProps> = ({
 
                 const largeArcFlag = segmentAngle > 180 ? 1 : 0;
 
-                // Use palette to avoid repeat if possible
-                const color = COLOR_PALETTE[i % COLOR_PALETTE.length];
+                // Use segment custom color if specified, fallback to palette
+                const color = seg.color || COLOR_PALETTE[i % COLOR_PALETTE.length];
 
                 return (
                   <path
@@ -363,10 +375,10 @@ export const LuckyWheel: React.FC<LuckyWheelProps> = ({
               {safeSegments.map((seg, i) => {
                 const angle = i * segmentAngle + segmentAngle / 2;
                 
-                let line1 = seg.text;
+                let line1 = seg.text || "Premio";
                 let line2 = "";
                 
-                const words = seg.text.split(' ');
+                const words = (seg.text || "Premio").split(' ');
                 if (words.length > 1) {
                   if (words[0].includes('%') || words[0].includes('$') || words[0].toLowerCase() === 'envío') {
                     line1 = words[0];

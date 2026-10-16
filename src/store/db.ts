@@ -3037,31 +3037,35 @@ export const db = {
   },
 
   saveOrder: async (order: Omit<Order, "id" | "createdAt" | "paymentStatus"> & { paymentStatus?: string }) => {
-    // 1. Insert the order
+    // 1. Pack extended metadata cleanly into notes
+    const extraNotes: string[] = [];
+    if (order.tableNumber) extraNotes.push(`[Mesa: ${order.tableNumber}]`);
+    if (order.tipAmount && order.tipAmount > 0) extraNotes.push(`[Propina: $${order.tipAmount} (${order.tipType || "none"})]`);
+    if (order.couponCode) extraNotes.push(`[Cupón aplicado: ${order.couponCode} - Descuento: $${order.discountAmount || 0}]`);
+    if (order.recipientName && order.recipientName !== order.customerName) extraNotes.push(`[Recibe: ${order.recipientName}]`);
+    if (order.note) extraNotes.push(order.note);
+
+    const compiledNotes = extraNotes.join("\n\n");
+
+    // 2. Insert the order using valid schema columns
     const { data, error } = await supabase
       .from("orders")
       .insert({
         restaurant_id: order.restaurantId,
-        customer_id: order.customerId,
-        customer_type: order.customerType || (order.customerId ? 'registered' : 'guest'),
+        user_id: order.customerId && order.customerId.length > 20 ? order.customerId : null,
         customer_name: order.customerName,
+        customer_phone: order.customerPhone,
+        delivery_address: order.address || (order as any).deliveryAddress || "Dirección no especificada",
         items: order.items,
+        subtotal: (order as any).subtotal || order.total,
+        delivery_fee: (order as any).deliveryFee || 0,
+        discount: order.discountAmount || 0,
         total: order.total,
-        status: order.status,
-        driver_id: order.driverId,
+        status: order.status || "pending",
+        driver_id: order.driverId || null,
         payment_method: order.paymentMethod || "cash",
         payment_status: order.paymentStatus || "pending",
-        delivery_lat: order.deliveryLat,
-        delivery_lng: order.deliveryLng,
-        table_number: order.tableNumber,
-        is_waiter_called: order.isWaiterCalled,
-        tip_amount: order.tipAmount || 0,
-        tip_percentage: order.tipPercentage || 0,
-        tip_type: order.tipType || "none",
-        customer_phone: order.customerPhone,
-        recipient_name: order.recipientName,
-        address: order.address,
-        note: order.couponCode ? `${order.note ? order.note + '\n\n' : ''}[Cupón aplicado: ${order.couponCode} - Descuento: $${order.discountAmount}]` : order.note,
+        notes: compiledNotes || null,
       })
       .select();
 
@@ -3073,22 +3077,22 @@ export const db = {
     const savedOrder = data?.[0];
     const orderId = savedOrder?.id;
 
-    // 2. Notify restaurant admin about new order
+    // 3. Notify restaurant admin about new order
     try {
       const isWaiterCall = !!order.isWaiterCalled;
       const title = isWaiterCall ? "🔔 ¡Llamado de Mesero!" : "¡Nuevo Pedido en SmartBite!";
 
-      // B. Explicitly notify the restaurant owner's app panel
       const { data: restaurantData } = await supabase
         .from("restaurants")
-        .select("owner_id, name")
+        .select("user_id, name")
         .eq("id", order.restaurantId)
         .single();
 
-      if (restaurantData?.owner_id) {
-        console.log(`[db.saveOrder] Sending notification to restaurant owner_id: ${restaurantData.owner_id}`);
+      const ownerId = (restaurantData as any)?.user_id || (restaurantData as any)?.owner_id;
+      if (ownerId) {
+        console.log(`[db.saveOrder] Sending notification to restaurant owner: ${ownerId}`);
         await db.saveNotification({
-          userId: restaurantData.owner_id,
+          userId: ownerId,
           title,
           body: isWaiterCall
             ? `Atención requerida: Mesa ${order.tableNumber || "N/A"} solicita un mesero en ${restaurantData.name}.`
@@ -3097,13 +3101,42 @@ export const db = {
           orderId: orderId,
         });
       } else {
-        console.warn(`[db.saveOrder] Restaurant ${order.restaurantId} has NO owner_id! Notification will not be sent.`);
+        console.warn(`[db.saveOrder] Restaurant ${order.restaurantId} has no owner user_id. Notification skipped.`);
       }
     } catch (notifErr) {
       console.error("Error triggering notifications in saveOrder:", notifErr);
     }
 
     return { data: savedOrder, error: null };
+  },
+
+  addPrizeToOrder: async (orderId: string, prize: any) => {
+    try {
+      if (!orderId || orderId === "new") return { success: false };
+      const { data: orderData } = await supabase
+        .from("orders")
+        .select("id, notes")
+        .eq("id", orderId)
+        .single();
+
+      if (orderData) {
+        const prizeText = prize.prize_text || prize.prizeText || prize.text || "Premio";
+        const prizeBadge = `\n\n🎁 [PREMIO RULETA GANADO: ${prizeText}]`;
+        const updatedNotes = orderData.notes
+          ? `${orderData.notes}${prizeBadge}`
+          : prizeBadge.trim();
+
+        await supabase
+          .from("orders")
+          .update({ notes: updatedNotes })
+          .eq("id", orderId);
+        console.log(`[db.addPrizeToOrder] Order #${orderId} updated with prize: ${prizeText}`);
+      }
+      return { success: true };
+    } catch (e) {
+      console.error("Error in addPrizeToOrder:", e);
+      return { success: false, error: e };
+    }
   },
 
   getRestaurantOrders: async (restaurantId: string) => {
