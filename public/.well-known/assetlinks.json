@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.smartbite.app",
+      "sha256_cert_fingerprints": [
+        "14:6D:E9:83:C5:F1:FF:A4:D7:9F:8F:A1:7C:F4:7D:0C:6F:AC:6C:5F:A7:2F:E9:CE:22:98:8C:7F:A3:3F:BE:0A"
+      ]
+    }
+  }
+]

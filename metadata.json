@@ -1,0 +1,12 @@
+{
+  "name": "SmartBite",
+  "description": "Plataforma multi-tenant de restaurantes con IA para ventas y gestión de menús.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

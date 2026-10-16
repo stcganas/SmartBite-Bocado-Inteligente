@@ -1,0 +1,284 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Roboto:wght@300;400;500;700;900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .glass-card {
+    background-color: rgba(30, 30, 30, 0.7);
+    @apply backdrop-blur-md rounded-[20px] shadow-xl;
+    border: 1px solid rgba(66, 66, 66, 0.3);
+  }
+  .glass-button {
+    background: linear-gradient(135deg, #FF8A00 0%, #FFB347 100%);
+    box-shadow: 0 4px 15px rgba(255, 138, 0, 0.4);
+    transition: all 0.3s ease;
+  }
+  .glass-button:hover {
+    box-shadow: 0 6px 20px rgba(255, 138, 0, 0.6);
+    transform: translateY(-2px);
+  }
+  .glow-text {
+    text-shadow: 0 0 10px rgba(255, 200, 87, 0.5);
+  }
+  .animate-spin-slow {
+    animation: spin 8s linear infinite;
+  }
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
+
+@layer base {
+  :root {
+    /* Dark Theme Default */
+    --surface-base: #0B0B0B;
+    --surface: #121212;
+    --surface-variant: #1E1E1E;
+    --surface-light: #242424;
+    
+    --on-surface: #FFFFFF;
+    --on-surface-variant: #D1D1D1;
+    --on-surface-muted: #8A8A8A;
+    
+    --outline: #424242;
+    --outline-variant: #2A2A2A;
+  }
+
+  :root[data-theme="light"] {
+    /* Light Theme (Premium) */
+    --surface-base: #F8F9FA;
+    --surface: #FFFFFF;
+    --surface-variant: #F1F3F5;
+    --surface-light: #E9ECEF;
+    
+    --on-surface: #212529;
+    --on-surface-variant: #495057;
+    --on-surface-muted: #868E96;
+    
+    --outline: #DEE2E6;
+    --outline-variant: #CED4DA;
+  }
+
+  html, body {
+    @apply bg-surface-base text-on-surface font-sans antialiased selection:bg-primary-container selection:text-white;
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    color-scheme: dark;
+  }
+  
+  * {
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight text-on-surface;
+  }
+}
+
+@layer components {
+  .md-card {
+    background-color: rgba(30, 30, 30, 0.7);
+    @apply backdrop-blur-md rounded-[20px] shadow-xl p-6 transition-all;
+    border: 1px solid rgba(66, 66, 66, 0.3);
+  }
+  
+  .md-button-filled {
+    background: linear-gradient(135deg, #FF8A00 0%, #FFB347 100%);
+    box-shadow: 0 4px 15px rgba(255, 138, 0, 0.4);
+    @apply text-white px-6 py-3 rounded-full font-bold transition-all disabled:opacity-50 disabled:pointer-events-none;
+  }
+  
+  .md-button-filled:hover:not(:disabled) {
+    box-shadow: 0 6px 20px rgba(255, 138, 0, 0.6);
+    transform: translateY(-2px);
+  }
+  
+  .md-button-tonal {
+    @apply bg-surface-variant border border-outline-variant text-on-surface px-6 py-3 rounded-full font-medium transition-all hover:bg-surface-light hover:border-outline;
+  }
+  
+  .md-button-outlined {
+    @apply border border-primary text-primary px-6 py-3 rounded-full font-medium transition-all hover:bg-primary hover:text-white active:scale-95;
+  }
+  
+  .md-input {
+    background-color: rgba(30, 30, 30, 0.8);
+    @apply border border-outline-variant px-4 py-3 rounded-xl focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-on-surface placeholder-on-surface-muted;
+  }
+  
+  .golden-glow-module {
+    @apply relative transition-all duration-500 z-10;
+    background-color: #000000 !important;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    box-shadow: 
+      0 15px 35px -15px rgba(0, 0, 0, 1),
+      -10px -10px 30px -10px rgba(255, 138, 0, 0.2),
+      10px -10px 30px -10px rgba(255, 138, 0, 0.2),
+      -10px 10px 30px -10px rgba(255, 138, 0, 0.2),
+      10px 10px 30px -10px rgba(255, 138, 0, 0.2);
+  }
+
+  /* Gradient Glow Border (Static) */
+  .golden-glow-module::before {
+    content: "";
+    @apply absolute -inset-[1.5px] rounded-[inherit] pointer-events-none z-[1];
+    padding: 1.5px;
+    background: linear-gradient(
+      135deg,
+      #FFD700 0%,
+      rgba(255, 138, 0, 0.6) 25%,
+      rgba(255, 215, 0, 0.1) 50%,
+      rgba(255, 138, 0, 0.6) 75%,
+      #FFD700 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.9;
+  }
+
+  /* Subtle Corner Glows (Static) */
+  .golden-glow-module::after {
+    content: "";
+    @apply absolute inset-0 rounded-[inherit] pointer-events-none opacity-40 z-[2];
+    background-image: 
+      radial-gradient(circle at 0% 0%, #FFD700 0%, transparent 20%),
+      radial-gradient(circle at 100% 0%, #FFD700 0%, transparent 20%),
+      radial-gradient(circle at 0% 100%, #FFD700 0%, transparent 20%),
+      radial-gradient(circle at 100% 100%, #FFD700 0%, transparent 20%);
+    background-size: 100% 100%;
+    filter: blur(8px);
+    mix-blend-mode: color-dodge;
+  }
+
+  .golden-glow-module:hover {
+    box-shadow: 
+      0 20px 45px -15px rgba(0, 0, 0, 1),
+      -15px -15px 40px -10px rgba(255, 215, 0, 0.3),
+      15px -15px 40px -10px rgba(255, 215, 0, 0.3),
+      -15px 15px 40px -10px rgba(255, 215, 0, 0.3),
+      15px 15px 40px -10px rgba(255, 215, 0, 0.3);
+    transform: translateY(-2px);
+  }
+  
+  .header-glow-module {
+    @apply relative transition-all duration-500 z-10;
+    background: rgba(38, 38, 38, 0.85) !important;
+    backdrop-filter: blur(20px);
+    border: 1.5px solid rgba(255, 138, 0, 0.4);
+    box-shadow: 
+      0 10px 30px rgba(0, 0, 0, 0.5),
+      0 0 35px rgba(255, 138, 0, 0.45);
+  }
+
+  :root[data-theme="light"] .header-glow-module {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1.5px solid rgba(255, 138, 0, 0.5);
+    box-shadow: 
+      0 10px 35px rgba(0, 0, 0, 0.08),
+      0 0 30px rgba(255, 138, 0, 0.35);
+  }
+
+  /* Gradient Glow Border for Header */
+  .header-glow-module::before {
+    content: "";
+    @apply absolute -inset-[1.5px] rounded-[inherit] pointer-events-none z-[1];
+    padding: 1.5px;
+    background: linear-gradient(
+      135deg,
+      #FFD700 0%,
+      #FF8A00 50%,
+      #FFD700 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.95;
+  }
+
+  /* Corner Glows for Header */
+  .header-glow-module::after {
+    content: "";
+    @apply absolute inset-0 rounded-[inherit] pointer-events-none opacity-60 z-[2];
+    background-image: 
+      radial-gradient(circle at 10% 50%, rgba(255, 138, 0, 0.2) 0%, transparent 45%),
+      radial-gradient(circle at 90% 50%, rgba(255, 215, 0, 0.2) 0%, transparent 45%);
+    background-size: 100% 100%;
+    filter: blur(6px);
+    mix-blend-mode: color-dodge;
+  }
+
+  .hero-banner-glow {
+    @apply relative transition-all duration-500 z-10;
+    background-color: #000000 !important;
+    border: 2px solid rgba(255, 215, 0, 0.6);
+    box-shadow: 0 15px 35px -15px rgba(0, 0, 0, 1);
+  }
+
+  .hero-banner-glow:hover {
+    box-shadow: 0 20px 45px -15px rgba(0, 0, 0, 1);
+    transform: translateY(-2px);
+  }
+}
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-outline rounded-full hover:bg-primary transition-colors;
+}
+
+/* Hide scrollbar for mobile nav if needed */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #qr-print-area, #qr-print-area *,
+  #smartbite-print-docs, #smartbite-print-docs * {
+    visibility: visible;
+  }
+  #qr-print-area, #smartbite-print-docs {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  #qr-print-area {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 2rem !important;
+  }
+  .print-break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

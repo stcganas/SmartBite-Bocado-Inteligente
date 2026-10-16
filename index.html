@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>SmartBite</title>
+    <!-- Soportes PWA e iOS -->
+    <meta name="theme-color" content="#ea580c" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/png" href="/logo-192.png" />
+    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="SmartBite" />
+    <script>
+      (function() {
+        var theme = localStorage.getItem('app-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+
+        // Early cleanup of stale, expired, or invalid Supabase tokens before scripts load
+        try {
+          var nowSec = Math.floor(Date.now() / 1000);
+          var keysToRemove = [];
+          for (var i = 0; i < localStorage.length; i++) {
+            var k = localStorage.key(i);
+            if (k && (k.indexOf('sb-') === 0 || k.indexOf('supabase') !== -1 || k.indexOf('auth-token') !== -1 || k === 'supabase.auth.token')) {
+              var val = localStorage.getItem(k);
+              if (!val || val === 'undefined' || val === 'null') {
+                keysToRemove.push(k);
+              } else if (k.indexOf('-auth-token') !== -1) {
+                try {
+                  var parsed = JSON.parse(val);
+                  if (!parsed || (!parsed.access_token && !parsed.refresh_token)) {
+                    keysToRemove.push(k);
+                  } else if (parsed.expires_at && parsed.expires_at <= nowSec + 30) {
+                    // Token is already expired; purging prevents "Invalid Refresh Token" crash on startup
+                    keysToRemove.push(k);
+                  }
+                } catch(e) {
+                  keysToRemove.push(k);
+                }
+              }
+            }
+          }
+          for (var j = 0; j < keysToRemove.length; j++) {
+            localStorage.removeItem(keysToRemove[j]);
+          }
+        } catch(e) {}
+      })();
+      
+      // Early PWA event capturing to guarantee we never miss the install event
+      window.deferredPrompt = null;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        window.deferredPrompt = e;
+        window.dispatchEvent(new CustomEvent('pwa-prompt-captured'));
+        console.log('Early captured beforeinstallprompt event');
+      });
+
+      // Shield console.error from reporting handled auth refresh notices as fatal runtime errors
+      (function() {
+        var origConsoleError = console.error;
+        console.error = function() {
+          var args = Array.prototype.slice.call(arguments);
+          var str = args.map(function(a) { 
+            return (a && (a.message || a.error_description || a.description)) || String(a || ''); 
+          }).join(' ');
+
+          if (
+            str.indexOf('Refresh Token') !== -1 ||
+            str.indexOf('refresh_token') !== -1 ||
+            str.indexOf('Invalid Refresh Token') !== -1 ||
+            str.indexOf('invalid_grant') !== -1 ||
+            str.indexOf('session_not_found') !== -1
+          ) {
+            console.warn('[Handled Auth Notice] Stale Supabase session token:', str);
+            try {
+              for (var i = 0; i < localStorage.length; i++) {
+                var k = localStorage.key(i);
+                if (k && (k.indexOf('sb-') === 0 || k.indexOf('auth-token') !== -1 || k === 'supabase.auth.token')) {
+                  localStorage.removeItem(k);
+                }
+              }
+            } catch(e) {}
+            return;
+          }
+          return origConsoleError.apply(console, arguments);
+        };
+      })();
+
+      // Early shield against stale or revoked Supabase refresh tokens
+      window.addEventListener('unhandledrejection', function(event) {
+        var msg = (event.reason && (event.reason.message || event.reason.error_description)) || String(event.reason || '');
+        if (
+          msg.indexOf('Refresh Token') !== -1 || 
+          msg.indexOf('refresh_token') !== -1 || 
+          msg.indexOf('Invalid Refresh Token') !== -1 ||
+          msg.indexOf('invalid_grant') !== -1 ||
+          msg.indexOf('session_not_found') !== -1
+        ) {
+          event.preventDefault();
+          if (event.stopPropagation) event.stopPropagation();
+          if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+          try {
+            for (var i = 0; i < localStorage.length; i++) {
+              var k = localStorage.key(i);
+              if (k && (k.indexOf('sb-') === 0 || k.indexOf('auth-token') !== -1 || k === 'supabase.auth.token')) {
+                localStorage.removeItem(k);
+              }
+            }
+          } catch(e) {}
+        }
+      });
+      window.addEventListener('error', function(event) {
+        var msg = (event.error && (event.error.message || event.error.error_description)) || event.message || '';
+        if (
+          msg.indexOf('Refresh Token') !== -1 || 
+          msg.indexOf('refresh_token') !== -1 || 
+          msg.indexOf('Invalid Refresh Token') !== -1 ||
+          msg.indexOf('invalid_grant') !== -1 ||
+          msg.indexOf('session_not_found') !== -1
+        ) {
+          event.preventDefault();
+          if (event.stopPropagation) event.stopPropagation();
+          if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="/api/config.js"></script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
